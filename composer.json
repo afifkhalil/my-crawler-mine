@@ -2,7 +2,7 @@
     "name": "afif/instagram-mahmoud-scraper",
     "description": "this is for touta bakaboza",
     "type": "library",
-    "license": "KAR",
+    "license": "MIT",
     "authors": [
         {
             "name": "afifkhalil",
