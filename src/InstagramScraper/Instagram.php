@@ -28,6 +28,7 @@ use InstagramScraper\Http\Request;
 use Psr\Http\Client\ClientInterface;
 use Psr\SimpleCache\CacheInterface;
 use stdClass;
+use Phpfastcache\Helper\Psr16Adapter;
 
 class Instagram
 {
@@ -54,7 +55,7 @@ class Instagram
     private $sessionPassword;
     private $userSession;
     private $rhxGis = null;
-    private $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36';
+    private $userAgent = 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.82 Safari/537.36';
     private $customCookies = null;
 
     /**
@@ -84,7 +85,16 @@ class Instagram
      */
     public static function withCredentials(ClientInterface $client, $username, $password, $cache)
     {
-        static::$instanceCache = $cache;
+        if($cache){
+            if(empty(static::$instanceCache)){
+           
+           // if(!$this->isLoggedIn($session)){
+                $my_cache=new Psr16Adapter('Files');
+                static::$instanceCache = $my_cache;
+               \Log::info('NEW Psr16Adapter...........');
+            }
+        } 
+    
         $instance = new self($client);
         $instance->sessionUsername = $username;
         $instance->sessionPassword = $password;
@@ -1782,7 +1792,9 @@ class Instagram
         }
 
         $session = static::$instanceCache->get($this->getCacheKey());
+        if ($this->isLoggedIn($session)) \Log::info('loggedIn yes...........');
         if ($force || !$this->isLoggedIn($session)) {
+            \Log::info('not logged..........');
             $response = Request::get(Endpoints::BASE_URL);
             if ($response->code !== static::HTTP_OK) {
                 throw new InstagramException('Response code is ' . $response->code . '. Body: ' . static::getErrorBody($response->body) . ' Something went wrong. Please report issue.', $response->code);
@@ -1810,7 +1822,7 @@ class Instagram
             ];
             $response = Request::post(Endpoints::LOGIN_URL, $headers,
                 ['username' => $this->sessionUsername, 'enc_password' => '#PWD_INSTAGRAM_BROWSER:0:' . time() . ':' . $this->sessionPassword]);
-
+        
             if (isset($response->body->message) && $response->body->message == 'checkpoint_required') {
                 $response = $this->verifyTwoStep($response, $cookies, $twoStepVerificator);
             }
@@ -1824,6 +1836,7 @@ class Instagram
             }
 
             if (is_object($response->body) && !$response->body->authenticated) {
+
                 throw new InstagramAuthException('User credentials are wrong.');
             }
 
@@ -1923,7 +1936,7 @@ class Instagram
 
         $url = Endpoints::BASE_URL . $response->body->checkpoint_url;
         $response = Request::get($url, $headers);
-
+       
         if (preg_match('/"challengeType":"RecaptchaChallengeForm"/', $response->raw_body, $matches)) {
             throw new InstagramChallengeRecaptchaException('Instagram asked to enter the captcha.', $response->code);
         } elseif (preg_match('/"challengeType":"SubmitPhoneNumberForm"/', $response->raw_body, $matches)) {
