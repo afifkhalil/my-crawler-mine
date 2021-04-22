@@ -86,8 +86,7 @@ class Instagram
     public static function withCredentials(ClientInterface $client, $username, $password, $cache)
     {
         if($cache){
-            if(empty(static::$instanceCache)){
-           
+            if(empty(static::$instanceCache)){           
            // if(!$this->isLoggedIn($session)){
                 $my_cache=new Psr16Adapter('Files');
                 static::$instanceCache = $my_cache;
