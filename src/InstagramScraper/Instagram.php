@@ -92,8 +92,7 @@ class Instagram
                 static::$instanceCache = $my_cache;
                \Log::info('NEW Psr16Adapter...........');
             }
-        } 
-    
+        }     
         $instance = new self($client);
         $instance->sessionUsername = $username;
         $instance->sessionPassword = $password;
